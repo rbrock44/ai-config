@@ -8,7 +8,9 @@
 
 - [What's My Purpose?](#-whats-my-purpose)
 - [How to Use](#-how-to-use)
+  - [Working Preferences](#working-preferences)
   - [Claude Code](#claude-code)
+  - [Copilot](#copilot)
   - [Shared](#shared)
 - [Technologies](#-technologies)
 - [Getting Started (Local Setup)](#-getting-started-local-setup)
@@ -17,9 +19,9 @@
 
 ## 🧠 What's My Purpose?
 
-This project holds the config that shapes how AI tooling behaves across my projects — Claude Code settings, custom skills, subagents, slash commands, hooks, and the standing instructions it works from.
+This project holds the config that shapes how AI tooling behaves across my projects.
 
-It is scoped to AI tooling only. Editor and IDE config lives in [dev-environment](https://github.com/rbrock44/dev-environment); shell and machine setup lives in [scripts](https://github.com/rbrock44/scripts).
+It is scoped to AI tooling
 
 ---
 
@@ -27,10 +29,27 @@ It is scoped to AI tooling only. Editor and IDE config lives in [dev-environment
 
 ---
 
+### Working Preferences
+
+The cross-repo rules: no AI attribution, commit message style, git safety, branch and CI
+conventions. Written twice, once per tool, because neither tool reads the other's file:
+
+* `claude/CLAUDE.md` → install to `~/.claude/CLAUDE.md`
+* `copilot/copilot-instructions.md` → see [Copilot](#copilot) below for the two install paths
+
+**These two files are mirrors. Change one, change the other.**
+
+Only cross-repo preferences go in them. Per-repo architecture, commands, and code style
+belong in that repo's own `.github/copilot-instructions.md`.
+
+---
+
 ### Claude Code
 
 Target: `~/.claude/` (`C:\Users\<user>\.claude` on Windows)
 
+* `CLAUDE.md`
+  * The working preferences above. Loads in every project once installed at `~/.claude/CLAUDE.md`
 * `settings.json`
   * Dark theme, opus model, custom status line, `frontend-design` plugin enabled
 * `statusline-command.js`
@@ -49,13 +68,28 @@ Target: `~/.claude/` (`C:\Users\<user>\.claude` on Windows)
 * `hooks/`
   * Scripts fired on tool events. Wired up through `settings.json`, not by dropping files here. Empty for now
 
-Credentials (`.credentials.json`), history, caches, session state, and telemetry are deliberately **not** captured — see `.gitignore`.
+Credentials (`.credentials.json`), history, caches, session state, and telemetry are deliberately **not** captured, see `.gitignore`.
+
+---
+
+### Copilot
+
+Copilot has no true global instructions file, so `copilot/copilot-instructions.md` gets
+applied one of two ways:
+
+* **Per repo** — paste it at the top of that repo's `.github/copilot-instructions.md`, above
+  the repo-specific sections, and add a short `CLAUDE.md` pointing at it. This is the pattern
+  already used in `compare-achievements`
+* **Globally in VS Code** — point `github.copilot.chat.codeGeneration.instructions` in user
+  settings at a local copy
+
+See `copilot/README.md` for both, including the exact settings snippet.
 
 ---
 
 ### Shared
 
-Tool-agnostic prompt material — `CLAUDE.md` templates and prompt snippets that get copied into individual project repos rather than into a global config directory.
+Tool-agnostic prompt material, `CLAUDE.md` templates and prompt snippets that get copied into individual project repos rather than into a global config directory.
 
 ---
 
