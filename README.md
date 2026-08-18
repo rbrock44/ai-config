@@ -60,7 +60,12 @@ Target: `~/.claude/` (`C:\Users\<user>\.claude` on Windows)
     They are kept local because they accumulate project and client specifics that do not belong
     in a public repo
 * `skills/`
-  * Custom skills — a `SKILL.md` per folder describing a repeatable workflow. Empty for now
+  * Custom skills — a `SKILL.md` per folder describing a repeatable workflow
+  * `apply-all/` — say **apply-all** with an instruction to roll it across every website repo
+    listed in the `directory` app. Derives the roster from `directory`'s source rather than a
+    hardcoded list, detects which repos the instruction does not fit (React `connect-4`, the
+    shelved `enderle-cattle-company`, and so on), and asks what to do about them **before**
+    editing anything
 * `agents/`
   * Custom subagent definitions, one markdown file each with frontmatter for model and tools. Empty for now
 * `commands/`
