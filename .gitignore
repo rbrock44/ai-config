@@ -1,0 +1,37 @@
+# Never commit - secrets
+.credentials.json
+*.credentials.json
+**/auth.json
+.env
+.env.*
+
+# Machine state / session noise
+history.jsonl
+stats-cache.json
+.last-*
+daemon.log
+backups/
+cache/
+paste-cache/
+file-history/
+shell-snapshots/
+session-env/
+sessions/
+telemetry/
+tasks/
+jobs/
+plans/
+ide/
+plugins/cache/
+plugins/marketplaces/
+**/installed_plugins.json
+**/plugin-catalog-cache.json
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Memory stays local - accumulates project/client specifics
+claude/memory/
+memory/
