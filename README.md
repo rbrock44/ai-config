@@ -110,7 +110,40 @@ Tool-agnostic prompt material, `CLAUDE.md` templates and prompt snippets that ge
 
 * Install [Claude Code](https://claude.com/claude-code)
 * Clone [repo](https://github.com/rbrock44/ai-config)
-* Copy the contents of `claude/` into `~/.claude/`
+* Run `./setup.sh`
 * Restart Claude Code
+
+---
+
+### setup.sh
+
+Installs `claude/` into `~/.claude/`. Safe to run repeatedly — it is the update path as well
+as the install path, so on a second machine it is `git pull && ./setup.sh`.
+
+```bash
+./setup.sh              # install or update ~/.claude from this repo
+./setup.sh --pull       # capture changes made on this machine back into the repo
+./setup.sh --dry-run    # show what would change, touch nothing
+./setup.sh --help
+```
+
+What it does and does not do:
+
+* Files that already match are reported `unchanged` and left alone — no needless rewrites
+* A file that differs is **backed up before being overwritten**, into
+  `~/.claude/backups/ai-config-sync/<timestamp>/`
+* Only the managed set is touched: `CLAUDE.md`, `settings.json`, `statusline-command.js`, and
+  the `skills/`, `agents/`, `commands/`, `hooks/` trees. Everything else in `~/.claude` —
+  credentials, history, sessions, caches, plugins — is never read or written
+* It never deletes on the far side. Removing a skill from the repo will not remove it from
+  `~/.claude`; delete that by hand
+* `memory/` is never synced in either direction, by design
+* `settings.json` is written by Claude Code itself, so overwriting it can drop machine state.
+  The script warns specifically when that file was the one replaced, and points at the backup
+
+`--pull` is the reverse direction, for when a skill or setting was edited on the machine
+rather than in the repo. Review with `git diff` before committing.
+
+`CLAUDE_HOME` overrides the target if `~/.claude` is not where the config lives.
 
 ---
