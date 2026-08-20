@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 #
-# Install or update this repo's Claude Code config into ~/.claude.
+# Install or update this repo's Claude Code and Copilot config on this machine.
+#
+# Claude Code  ->  files copied into ~/.claude
+# Copilot      ->  VS Code user settings pointed at copilot/copilot-instructions.md
 #
 # Safe to run repeatedly. Files that already match are left alone, files that
 # differ are backed up before being overwritten, and nothing outside the managed
 # list below is ever touched or deleted.
 #
-#   ./setup.sh              install or update  ~/.claude  from this repo
-#   ./setup.sh --pull       capture changes made on this machine back into the repo
+#   ./setup.sh              install or update Claude + Copilot config on this machine
+#   ./setup.sh --pull       capture Claude changes made on this machine back into the repo
+#   ./setup.sh --claude     Claude Code config only
+#   ./setup.sh --copilot    Copilot (VS Code) config only
 #   ./setup.sh --dry-run    show what would change, touch nothing
 #   ./setup.sh --help
 #
@@ -33,6 +38,8 @@ MANAGED_DIRS=(
 
 MODE="install"
 DRY_RUN=0
+DO_CLAUDE=1
+DO_COPILOT=1
 n_new=0; n_updated=0; n_same=0; n_backed_up=0
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -50,13 +57,15 @@ warn() { printf '  %swarn%s     %s\n'      "$C_YELLOW" "$C_RESET" "$*" >&2; }
 die()  { printf '%serror%s %s\n'           "$C_RED"    "$C_RESET" "$*" >&2; exit 1; }
 
 usage() {
-  sed -n '3,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '3,17p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
   exit 0
 }
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --pull)    MODE="pull" ;;
+    --claude)  DO_CLAUDE=1; DO_COPILOT=0 ;;
+    --copilot) DO_COPILOT=1; DO_CLAUDE=0 ;;
     --dry-run) DRY_RUN=1 ;;
     -h|--help) usage ;;
     *)         die "unknown option: $1 (try --help)" ;;
@@ -65,6 +74,10 @@ while [ $# -gt 0 ]; do
 done
 
 [ -d "$REPO_DIR/claude" ] || die "no claude/ dir next to setup.sh - run it from inside the ai-config repo"
+
+if [ "$MODE" = "pull" ] && [ "$DO_CLAUDE" -eq 0 ]; then
+  die "--pull applies to Claude config only; there is nothing to pull back from VS Code settings"
+fi
 
 backup() {
   local dst="$1" rel="$2"
@@ -107,9 +120,126 @@ copy_tree() {
   done < <(find "$src" -type f -print0)
 }
 
+
+# ---------------------------------------------------------------------------
+# Copilot
+#
+# Copilot has no global instructions file, so the equivalent is pointing VS Code
+# user settings at the repo copy. Repo-level .github/copilot-instructions.md
+# files still apply on top of this.
+# ---------------------------------------------------------------------------
+
+vscode_settings_path() {
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*) printf '%s' "${APPDATA:-$HOME/AppData/Roaming}/Code/User/settings.json" ;;
+    Darwin)               printf '%s' "$HOME/Library/Application Support/Code/User/settings.json" ;;
+    *)                    printf '%s' "$HOME/.config/Code/User/settings.json" ;;
+  esac
+}
+
+find_python() {
+  local c
+  for c in python3 python py; do
+    if command -v "$c" >/dev/null 2>&1; then printf '%s' "$c"; return 0; fi
+  done
+  return 1
+}
+
+setup_copilot() {
+  local instr="$REPO_DIR/copilot/copilot-instructions.md"
+  local settings py
+  settings="$(vscode_settings_path)"
+
+  if [ ! -f "$instr" ]; then
+    warn "copilot/copilot-instructions.md not in repo, skipped"
+    return 0
+  fi
+  if [ ! -f "$settings" ]; then
+    warn "VS Code settings not found at $settings"
+    warn "open VS Code once to create it, then re-run"
+    return 0
+  fi
+  if ! py="$(find_python)"; then
+    warn "no python found - cannot edit settings.json safely"
+    warn "add this to $settings by hand:"
+    warn "  \"github.copilot.chat.codeGeneration.instructions\": [{ \"file\": \"$instr\" }]"
+    return 0
+  fi
+
+  local rc=0
+  AI_INSTR="$instr" AI_SETTINGS="$settings" AI_DRYRUN="$DRY_RUN" AI_BACKUP="$BACKUP_DIR"     "$py" - <<'PYEOF' || rc=$?
+import json, os, shutil, sys
+
+instr    = os.environ["AI_INSTR"]
+settings = os.environ["AI_SETTINGS"]
+dry      = os.environ["AI_DRYRUN"] == "1"
+backup   = os.environ["AI_BACKUP"]
+
+KEYS = [
+    "github.copilot.chat.codeGeneration.instructions",
+    "github.copilot.chat.commitMessageGeneration.instructions",
+]
+
+raw = open(settings, encoding="utf-8-sig").read()
+try:
+    data = json.loads(raw)
+except json.JSONDecodeError as e:
+    sys.stderr.write("json error: %s\n" % e)
+    sys.exit(3)
+
+changed = False
+for key in KEYS:
+    entries = data.get(key)
+    if not isinstance(entries, list):
+        entries = [] if entries is None else [entries]
+    # drop any previous pointer at this repo's file, wherever it used to live
+    kept = [e for e in entries
+            if not (isinstance(e, dict) and str(e.get("file", "")).replace("\\", "/").endswith("copilot/copilot-instructions.md"))]
+    already = len(kept) != len(entries) and any(
+        isinstance(e, dict) and os.path.normcase(os.path.normpath(str(e.get("file", "")))) ==
+        os.path.normcase(os.path.normpath(instr)) for e in entries)
+    if already and len(kept) == len(entries) - 1:
+        print("  unchanged vscode %s" % key.split(".")[-2])
+        continue
+    kept.append({"file": instr})
+    data[key] = kept
+    changed = True
+    print("  set       vscode %s" % key.split(".")[-2])
+
+if not changed:
+    sys.exit(0)
+if dry:
+    sys.exit(10)
+
+os.makedirs(backup, exist_ok=True)
+shutil.copy2(settings, os.path.join(backup, "vscode-settings.json"))
+with open(settings, "w", encoding="utf-8", newline="\n") as f:
+    json.dump(data, f, indent=4, ensure_ascii=False)
+    f.write("\n")
+sys.exit(10)
+PYEOF
+
+  if [ "$rc" -eq 10 ]; then
+    n_updated=$((n_updated + 1))
+    return 0
+  fi
+  if [ "$rc" -eq 3 ]; then
+    warn "$settings is not valid JSON (comments or a trailing comma?)"
+    warn "fix it in VS Code, or add the entry by hand - nothing was written"
+    return 0
+  fi
+  return 0
+}
+
 say ""
 if [ "$MODE" = "install" ]; then
-  say "${C_BOLD}ai-config${C_RESET}  repo ${C_DIM}->${C_RESET} $CLAUDE_HOME"
+  if [ "$DO_CLAUDE" -eq 1 ] && [ "$DO_COPILOT" -eq 1 ]; then
+    say "${C_BOLD}ai-config${C_RESET}  repo ${C_DIM}->${C_RESET} $CLAUDE_HOME ${C_DIM}+${C_RESET} VS Code settings"
+  elif [ "$DO_CLAUDE" -eq 1 ]; then
+    say "${C_BOLD}ai-config${C_RESET}  repo ${C_DIM}->${C_RESET} $CLAUDE_HOME"
+  else
+    say "${C_BOLD}ai-config${C_RESET}  repo ${C_DIM}->${C_RESET} VS Code settings"
+  fi
 else
   say "${C_BOLD}ai-config${C_RESET}  $CLAUDE_HOME ${C_DIM}->${C_RESET} repo"
 fi
@@ -117,6 +247,7 @@ fi
 say ""
 
 if [ "$MODE" = "install" ]; then
+  if [ "$DO_CLAUDE" -eq 1 ]; then
   [ "$DRY_RUN" -eq 0 ] && mkdir -p "$CLAUDE_HOME"
 
   settings_changed=0
@@ -139,6 +270,11 @@ if [ "$MODE" = "install" ]; then
   if [ "$settings_changed" -eq 1 ]; then
     warn "settings.json was overwritten - Claude Code writes to it directly, so check the"
     warn "backup for machine state the repo copy does not carry"
+  fi
+  fi
+
+  if [ "$DO_COPILOT" -eq 1 ]; then
+    setup_copilot
   fi
 else
   for f in "${MANAGED_FILES[@]}"; do

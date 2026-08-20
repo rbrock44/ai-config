@@ -117,12 +117,19 @@ Tool-agnostic prompt material, `CLAUDE.md` templates and prompt snippets that ge
 
 ### setup.sh
 
-Installs `claude/` into `~/.claude/`. Safe to run repeatedly — it is the update path as well
-as the install path, so on a second machine it is `git pull && ./setup.sh`.
+Sets up **both tools**. Safe to run repeatedly — it is the update path as well as the install
+path, so on a second machine it is `git pull && ./setup.sh`.
+
+| Tool | What it does |
+| --- | --- |
+| Claude Code | copies `claude/` into `~/.claude/` |
+| Copilot | points VS Code user settings at `copilot/copilot-instructions.md` |
 
 ```bash
-./setup.sh              # install or update ~/.claude from this repo
-./setup.sh --pull       # capture changes made on this machine back into the repo
+./setup.sh              # install or update both
+./setup.sh --pull       # capture Claude changes made on this machine back into the repo
+./setup.sh --claude     # Claude Code only
+./setup.sh --copilot    # Copilot only
 ./setup.sh --dry-run    # show what would change, touch nothing
 ./setup.sh --help
 ```
@@ -142,8 +149,18 @@ What it does and does not do:
   The script warns specifically when that file was the one replaced, and points at the backup
 
 `--pull` is the reverse direction, for when a skill or setting was edited on the machine
-rather than in the repo. Review with `git diff` before committing.
+rather than in the repo. Review with `git diff` before committing. It is Claude-only —
+there is nothing to pull back out of VS Code settings.
 
 `CLAUDE_HOME` overrides the target if `~/.claude` is not where the config lives.
+
+**On the Copilot half:** it writes two keys into VS Code user settings —
+`github.copilot.chat.codeGeneration.instructions` and
+`...commitMessageGeneration.instructions` — both pointing at this repo's file, using an
+absolute path derived at runtime so each machine gets its own. Existing settings are preserved
+and the file is backed up first. If the settings file has comments or a trailing comma it is
+not valid JSON, so the script refuses to touch it and tells you rather than risking your
+config. This covers Copilot Chat in VS Code only — not github.com and not other editors, which
+still need the per-repo `.github/copilot-instructions.md`. See `copilot/README.md`.
 
 ---
