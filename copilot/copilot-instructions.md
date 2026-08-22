@@ -107,16 +107,21 @@ confidence percentage, ordered highest first.
 1. commit and push (60%)
 2. run the e2e suite (25%)
 3. fix the failing spec (10%)
+4. something else (type it) (5%)
 ```
 
-- **Aim for a total near 100%.** Coming in under is fine and expected — the shortfall is the
-  unlisted long tail of possibilities not worth enumerating. Never exceed 100%
+- **Aim for a total near 100%.** The predicted entries come in under — the shortfall is the
+  unlisted long tail, and it lands on the write-in slot. Never exceed 100%
 - A low total is a signal, not sloppiness: it means the next move is genuinely open. Do not
   inflate numbers to close the gap
 - Predict what *I* am actually likely to ask for next given what just happened — not a generic
   menu. If a test run failed, `fix the failing spec` is the top entry, not `commit`
 - **Never offer a stop option.** No `stop here`, no `nothing further`, no `leave it as is`.
   I stop on my own — listing it wastes a slot on the one option I never need told
+- **Always end with a write-in slot.** The last numbered entry is an open line I type my own
+  answer into — `something else (type it)` — carrying whatever percentage the predictions left
+  unclaimed. It is an input, not an invitation to talk: never `discuss options`, never
+  `talk it through`, never `let's chat about it`
 - Two entries is fine when only two are plausible. Do not pad to three, and do not recycle the
   same three options response after response
 - Short phrases, no explanation attached — the percentage carries the reasoning

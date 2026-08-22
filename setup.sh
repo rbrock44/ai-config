@@ -104,7 +104,11 @@ copy_file() {
     upd "$rel"
     n_updated=$((n_updated + 1))
     backup "$dst" "$rel"
-    [ "$DRY_RUN" -eq 0 ] && cp -p "$src" "$dst"
+    # not `[ ... ] && cp` - as the last statement in the branch that returns 1
+    # on a dry run, and set -e then kills the script mid-listing.
+    if [ "$DRY_RUN" -eq 0 ]; then
+      cp -p "$src" "$dst"
+    fi
   fi
 }
 
@@ -140,7 +144,11 @@ vscode_settings_path() {
 find_python() {
   local c
   for c in python3 python py; do
-    if command -v "$c" >/dev/null 2>&1; then printf '%s' "$c"; return 0; fi
+    # command -v is not enough on Windows: python3 is often the Microsoft Store
+    # stub, which resolves on PATH but errors out when actually run.
+    if command -v "$c" >/dev/null 2>&1 && "$c" -c "" >/dev/null 2>&1; then
+      printf '%s' "$c"; return 0
+    fi
   done
   return 1
 }
