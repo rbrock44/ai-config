@@ -4,20 +4,22 @@
 
 ---
 
-## 📚 Table of Contents
+## Table of Contents
 
-- [What's My Purpose?](#-whats-my-purpose)
-- [How to Use](#-how-to-use)
+- [What's My Purpose?](#whats-my-purpose)
+- [How to Use](#how-to-use)
   - [Working Preferences](#working-preferences)
   - [Claude Code](#claude-code)
   - [Copilot](#copilot)
   - [Shared](#shared)
-- [Technologies](#-technologies)
-- [Getting Started (Local Setup)](#-getting-started-local-setup)
+- [Technologies](#technologies)
+- [Getting Started (Local Setup)](#getting-started-local-setup)
+  - [setup.sh](#setupsh)
+- [How to Contribute](#how-to-contribute)
 
 ---
 
-## 🧠 What's My Purpose?
+## What's My Purpose?
 
 This project holds the config that shapes how AI tooling behaves across my projects.
 
@@ -25,7 +27,7 @@ It is scoped to AI tooling
 
 ---
 
-## 🚦 How to Use
+## How to Use
 
 ---
 
@@ -98,7 +100,7 @@ Tool-agnostic prompt material, `CLAUDE.md` templates and prompt snippets that ge
 
 ---
 
-## 🛠 Technologies
+## Technologies
 
 - Claude Code
 - Markdown
@@ -106,7 +108,7 @@ Tool-agnostic prompt material, `CLAUDE.md` templates and prompt snippets that ge
 
 ---
 
-## 🚀 Getting Started (Local Setup)
+## Getting Started (Local Setup)
 
 * Install [Claude Code](https://claude.com/claude-code)
 * Clone [repo](https://github.com/rbrock44/ai-config)
@@ -162,5 +164,12 @@ and the file is backed up first. If the settings file has comments or a trailing
 not valid JSON, so the script refuses to touch it and tells you rather than risking your
 config. This covers Copilot Chat in VS Code only — not github.com and not other editors, which
 still need the per-repo `.github/copilot-instructions.md`. See `copilot/README.md`.
+
+---
+
+## How to Contribute
+
+Found a typo or a small, obvious fix? Open a PR directly.
+Want to change behavior or add something bigger? Open an issue first so we can talk it through before you put in the work.
 
 ---
