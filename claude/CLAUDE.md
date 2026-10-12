@@ -159,3 +159,15 @@ here" cleanups — raise them separately and let them be chosen.
 
 Architecture and code-style conventions vary by repo and are not standardized globally. Read
 the repo's own instructions file rather than assuming a house style.
+
+---
+
+## 🪟 wmux markdown views
+
+Never run `wmux markdown <file>` directly — it opens a new tab every time. Use:
+
+```bash
+node ~/.claude/hooks/wmux-md.js <file>   # refresh existing view of <file>, open only if none
+```
+
+After an Edit/Write a hook already refreshes any open view of that file. Do not reopen it.

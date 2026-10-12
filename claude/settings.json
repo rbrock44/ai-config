@@ -7,5 +7,19 @@
     "frontend-design@claude-plugins-official": true
   },
   "theme": "dark",
-  "model": "opus"
+  "model": "opus",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/hooks/wmux-md.js --hook",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
 }
